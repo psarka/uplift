@@ -27,4 +27,6 @@ setup(name='uplift',
                    'Topic :: Scientific/Engineering',
                    'Operating System :: POSIX',
                    'Programming Language :: Python :: 3.4'],
-      ext_modules=cythonize('uplift/tree/_criterion.pyx'))
+      ext_modules=cythonize(['uplift/tree/_criterion.pyx',
+                             'uplift/tree/_tree.pyx'],
+                            include_path=['/home/sqrt/Documents/scikit-learn/']))

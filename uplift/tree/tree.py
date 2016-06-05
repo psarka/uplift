@@ -31,6 +31,7 @@ class UpliftDecisionTreeClassifier(DecisionTreeClassifier, BaseDecisionTree):
     def __init__(self,
                  criterion="uplift_entropy",
                  splitter="best",
+                 importances="default",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -52,6 +53,8 @@ class UpliftDecisionTreeClassifier(DecisionTreeClassifier, BaseDecisionTree):
             class_weight=class_weight,
             random_state=random_state,
             presort=presort)
+
+        self.importances = importances
 
     def predict_proba(self, X, check_input=True):
         X = self._validate_X_predict(X, check_input)
@@ -300,8 +303,6 @@ class UpliftDecisionTreeClassifier(DecisionTreeClassifier, BaseDecisionTree):
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
-        print("this fit gets called for every tree with this criterion: {}".format(criterion))
-
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
@@ -311,9 +312,8 @@ class UpliftDecisionTreeClassifier(DecisionTreeClassifier, BaseDecisionTree):
                                                 random_state,
                                                 self.presort)
 
-        print("and this splitter: {}".format(splitter))
-
-        self.tree_ = UpliftTree(self.n_features_, self.n_classes_, self.n_outputs_)
+        self.tree_ = UpliftTree(self.n_features_, self.n_classes_, self.n_outputs_,
+                                self.importances)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
