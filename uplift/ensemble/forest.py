@@ -32,10 +32,9 @@ Single and multi-output problems are both handled.
 
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
+# Authors: Paulius Sarka <paulius.sarka@gmail.com>
+#
+# Based on sklearn/ensemble/forest.py (BSD 3 clause)
 #
 # License: BSD 3 clause
 
@@ -90,7 +89,7 @@ def _generate_unsampled_indices(random_state, n_samples):
 
     return unsampled_indices
 
-def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
+def _parallel_build_trees(tree, forest, X, y, group, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
@@ -114,15 +113,14 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree.fit(X, y, group, sample_weight=curr_sample_weight, check_input=False)
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree.fit(X, y, group, sample_weight=sample_weight, check_input=False)
 
     return tree
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
-                                    _LearntSelectorMixin)):
+class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, _LearntSelectorMixin)):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -211,7 +209,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, group, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -240,6 +238,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Validate or convert input data
         X = check_array(X, accept_sparse="csc", dtype=DTYPE)
         y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        group = check_array(group, accept_sparse='csc', ensure_2d=False, dtype=None)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -249,6 +248,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         n_samples, self.n_features_ = X.shape
 
         y = np.atleast_1d(y)
+        group = np.atleast_1d(group)
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
                  " expected. Please change the shape of y to "
@@ -315,7 +315,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                              backend="threading")(
                 delayed(_parallel_build_trees)(
-                    t, self, X, y, sample_weight, i, len(trees),
+                    t, self, X, y, group, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight)
                 for i, t in enumerate(trees))
 
@@ -369,8 +369,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         return sum(all_importances) / len(self.estimators_)
 
 
-class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
-                                          ClassifierMixin)):
+class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest, ClassifierMixin)):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -404,6 +403,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
+        raise NotImplementedError('not yet implemented')
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_classes_ = self.n_classes_
@@ -505,49 +505,11 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         return y, expanded_class_weight
 
-    def predict(self, X):
-        """Predict class for X.
+    def predict_uplift(self, X):
+        """Predict uplift for X.
 
-        The predicted class of an input sample is a vote by the trees in
-        the forest, weighted by their probability estimates. That is,
-        the predicted class is the one with highest mean probability
-        estimate across the trees.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        y : array of shape = [n_samples] or [n_samples, n_outputs]
-            The predicted classes.
-        """
-        proba = self.predict_proba(X)
-
-        if self.n_outputs_ == 1:
-            return self.classes_.take(np.argmax(proba, axis=1), axis=0)
-
-        else:
-            n_samples = proba[0].shape[0]
-            predictions = np.zeros((n_samples, self.n_outputs_))
-
-            for k in range(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
-                                                                    axis=1),
-                                                          axis=0)
-
-            return predictions
-
-    def predict_proba(self, X):
-        """Predict class probabilities for X.
-
-        The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
-        class in a leaf.
+        The predicted uplift of an input sample is computed as
+        the mean predicted uplift of the trees in the forest.
 
         Parameters
         ----------
@@ -560,8 +522,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            Uplift.
         """
         # Check data
         X = self._validate_X_predict(X)
@@ -572,7 +533,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(parallel_helper)(e, 'predict_proba', X,
+            delayed(parallel_helper)(e, 'predict_uplift', X,
                                       check_input=False)
             for e in self.estimators_)
 
@@ -594,38 +555,6 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                 proba[k] /= self.n_estimators
 
         return proba
-
-    def predict_log_proba(self, X):
-        """Predict class log-probabilities for X.
-
-        The predicted class log-probabilities of an input sample is computed as
-        the log of the mean predicted class probabilities of the trees in the
-        forest.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            such arrays if n_outputs > 1.
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-        """
-        proba = self.predict_proba(X)
-
-        if self.n_outputs_ == 1:
-            return np.log(proba)
-
-        else:
-            for k in range(self.n_outputs_):
-                proba[k] = np.log(proba[k])
-
-            return proba
 
 
 class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
