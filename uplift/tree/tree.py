@@ -1,15 +1,11 @@
 """
 This module gathers tree-based methods, including decision, regression and
-randomized trees. Single and multi-output problems are both handled.
+randomized trees.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
+# Authors: Paulius Sarka <paulius.sarka@gmail.com>
+#
+# Based on sklearn/tree/tree.py (BSD 3 clause)
 #
 # Licence: BSD 3 clause
 
@@ -42,10 +38,7 @@ from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
 from . import _tree, _splitter, _criterion
 
-__all__ = ["DecisionTreeClassifier",
-           "DecisionTreeRegressor",
-           "ExtraTreeClassifier",
-           "ExtraTreeRegressor"]
+__all__ = ["DecisionTreeClassifier"]
 
 
 # =============================================================================
@@ -110,9 +103,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = None
         self.max_features_ = None
 
-    def fit(self, X, y, sample_weight=None, check_input=True,
-            X_idx_sorted=None):
-        """Build a decision tree from the training set (X, y).
+    def fit(self, X, y, group, sample_weight=None, check_input=True, X_idx_sorted=None):
+        """Build a decision tree from the training set (X, y, group).
 
         Parameters
         ----------
@@ -125,6 +117,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             The target values (class labels in classification, real numbers in
             regression). In the regression case, use ``dtype=np.float64`` and
             ``order='C'`` for maximum efficiency.
+
+        group : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The group values, 0 for control, 1 for target.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -153,6 +148,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
             y = check_array(y, ensure_2d=False, dtype=None)
+            group = check_array(group, ensure_2d=False, dtype=None)
             if issparse(X):
                 X.sort_indices()
 
@@ -165,18 +161,22 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
+        group = np.atleast_1d(group)
         expanded_class_weight = None
 
         if y.ndim == 1:
-            # reshape is necessary to preserve the data contiguity against vs
-            # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
+
+        if group.ndim == 1:
+            group = np.reshape(group, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
             check_classification_targets(y)
-            y = np.copy(y)
+
+            # Encode y & group together before passing to the builder.
+            y = np.copy(2*group + y)
 
             self.classes_ = []
             self.n_classes_ = []
@@ -186,11 +186,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
             y_encoded = np.zeros(y.shape, dtype=np.int)
             for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k],
-                                                       return_inverse=True)
+                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
             y = y_encoded
+
+            # TODO check if binary
 
             if self.class_weight is not None:
                 expanded_class_weight = compute_sample_weight(
@@ -199,6 +200,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
+
+        # TODO encode group and check if binary
 
         self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
@@ -394,57 +397,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              % (self.n_features_, n_features))
 
         return X
-
-    def predict(self, X, check_input=True):
-        """Predict class or regression value for X.
-
-        For a classification model, the predicted class for each sample in X is
-        returned. For a regression model, the predicted value based on X is
-        returned.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        check_input : boolean, (default=True)
-            Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
-
-        Returns
-        -------
-        y : array of shape = [n_samples] or [n_samples, n_outputs]
-            The predicted classes, or the predict values.
-        """
-
-        X = self._validate_X_predict(X, check_input)
-        proba = self.tree_.predict(X)
-        n_samples = X.shape[0]
-
-        # Classification
-        if isinstance(self, ClassifierMixin):
-            if self.n_outputs_ == 1:
-                return self.classes_.take(np.argmax(proba, axis=1), axis=0)
-
-            else:
-                predictions = np.zeros((n_samples, self.n_outputs_))
-
-                for k in range(self.n_outputs_):
-                    predictions[:, k] = self.classes_[k].take(
-                        np.argmax(proba[:, k], axis=1),
-                        axis=0)
-
-                return predictions
-
-        # Regression
-        else:
-            if self.n_outputs_ == 1:
-                return proba[:, 0]
-
-            else:
-                return proba[:, :, 0]
 
     def apply(self, X, check_input=True):
         """
@@ -685,15 +637,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             random_state=random_state,
             presort=presort)
 
-    def predict_proba(self, X, check_input=True):
-        """Predict class probabilities of the input samples X.
+    def predict_uplift(self, X, check_input=True):
+        """Predict uplift for X.
 
-        The predicted class probability is the fraction of samples of the same
-        class in a leaf.
-
-        check_input : boolean, (default=True)
-            Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+        Predict the difference in probabilities of positive response between target
+        and control groups.
 
         Parameters
         ----------
@@ -701,6 +649,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
 
         Returns
         -------
@@ -713,52 +665,40 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
-            proba = proba[:, :self.n_classes_]
-            normalizer = proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba /= normalizer
 
-            return proba
+            control_0 = proba[:, 0]
+            control_1 = proba[:, 1]
+            target_0 = proba[:, 2]
+            target_1 = proba[:, 3]
+
+            control = control_0 + control_1
+            target = target_0 + target_1
+
+            p_control = np.where(control == 0, np.zeros_like(control), control_1 / control)
+            p_target = np.where(target == 0, np.zeros_like(target), target_1 / target)
+
+            return p_target - p_control
 
         else:
             all_proba = []
 
             for k in range(self.n_outputs_):
                 proba_k = proba[:, k, :self.n_classes_[k]]
-                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-                normalizer[normalizer == 0.0] = 1.0
-                proba_k /= normalizer
-                all_proba.append(proba_k)
+
+                control_0 = proba_k[:, 0]
+                control_1 = proba_k[:, 1]
+                target_0 = proba_k[:, 2]
+                target_1 = proba_k[:, 3]
+
+                control = control_0 + control_1
+                target = target_0 + target_1
+
+                p_control = np.where(control == 0, np.zeros_like(control), control_1 / control)
+                p_target = np.where(target == 0, np.zeros_like(target), target_1 / target)
+
+                all_proba.append(p_target - p_control)
 
             return all_proba
-
-    def predict_log_proba(self, X):
-        """Predict class log-probabilities of the input samples X.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            such arrays if n_outputs > 1.
-            The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-        """
-        proba = self.predict_proba(X)
-
-        if self.n_outputs_ == 1:
-            return np.log(proba)
-
-        else:
-            for k in range(self.n_outputs_):
-                proba[k] = np.log(proba[k])
-
-            return proba
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
