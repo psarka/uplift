@@ -50,6 +50,7 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini,
                 "entropy": _criterion.Entropy,
+                "uplift_gini": _criterion.UpliftGini,
                 "uplift_entropy": _criterion.UpliftEntropy}
 
 CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE}
