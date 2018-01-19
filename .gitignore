@@ -113,3 +113,5 @@ cythonize.dat
 !*/src/*.cpp
 *.sln
 *.pyproj
+_configtest*
+venv
