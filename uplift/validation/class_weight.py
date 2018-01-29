@@ -4,6 +4,8 @@
 import warnings
 import numpy as np
 
+from uplift.preprocessing import LabelEncoder
+
 
 def compute_class_weight(class_weight, classes, y):
     """Estimate class weights for unbalanced datasets.
@@ -34,9 +36,6 @@ def compute_class_weight(class_weight, classes, y):
     The "balanced" heuristic is inspired by
     Logistic Regression in Rare Events Data, King, Zen, 2001.
     """
-    # Import error caused by circular imports.
-    from ..preprocessing import LabelEncoder
-
     if set(y) - set(classes):
         raise ValueError("classes should include all valid labels that can "
                          "be in y")

@@ -1,27 +1,11 @@
-"""
-The :mod:`sklearn.ensemble` module includes ensemble-based methods for
-classification, regression and anomaly detection.
-"""
+from uplift.ensemble.forest import RandomForestClassifier
+from uplift.ensemble.forest import RandomForestRegressor
 
-from .base import BaseEnsemble
-from .forest import RandomForestClassifier
-from .forest import RandomForestRegressor
-from .forest import RandomTreesEmbedding
-from .forest import ExtraTreesClassifier
-from .forest import ExtraTreesRegressor
-from .bagging import BaggingClassifier
-from .bagging import BaggingRegressor
-from .voting_classifier import VotingClassifier
+from uplift.ensemble.forest import ExtraTreesClassifier
+from uplift.ensemble.forest import ExtraTreesRegressor
 
-from . import bagging
-from . import forest
-from . import partial_dependence
+from uplift.ensemble.bagging import BaggingClassifier
+from uplift.ensemble.bagging import BaggingRegressor
 
-__all__ = ["BaseEnsemble",
-           "RandomForestClassifier", "RandomForestRegressor",
-           "RandomTreesEmbedding", "ExtraTreesClassifier",
-           "ExtraTreesRegressor", "BaggingClassifier",
-           "BaggingRegressor", "GradientBoostingClassifier",
-           "GradientBoostingRegressor", "VotingClassifier",
-           "bagging", "forest", "gradient_boosting",
-           "partial_dependence"]
+from uplift.ensemble import bagging
+from uplift.ensemble import forest

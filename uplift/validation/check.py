@@ -4,7 +4,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from uplift.exceptions import DataConversionWarning
+from uplift.exceptions import DataConversionWarning, NotFittedError
 
 
 def check_random_state(seed):
@@ -224,8 +224,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        # FIXME NotFittedError_ --> NotFittedError in 0.19
-        raise _NotFittedError(msg % {'name': type(estimator).__name__})
+        raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
 def assert_all_finite(X):
@@ -362,3 +361,29 @@ def _num_samples(x):
         return x.shape[0]
     else:
         return len(x)
+
+
+def column_or_1d(y, warn=False):
+    """ Ravel column or 1d numpy array, else raises an error
+    Parameters
+    ----------
+    y : array-like
+    warn : boolean, default False
+       To control display of warnings.
+    Returns
+    -------
+    y : array
+    """
+    shape = np.shape(y)
+    if len(shape) == 1:
+        return np.ravel(y)
+    if len(shape) == 2 and shape[1] == 1:
+        if warn:
+            warnings.warn("A column-vector y was passed when a 1d array was"
+                          " expected. Please change the shape of y to "
+                          "(n_samples, ), for example using ravel().",
+                          DataConversionWarning, stacklevel=2)
+        return np.ravel(y)
+
+    raise ValueError("bad input shape {0}".format(shape))
+
