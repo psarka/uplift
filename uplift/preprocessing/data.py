@@ -12,26 +12,26 @@ import warnings
 
 import numpy as np
 from scipy import sparse
-
+#
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
-from ..utils import check_array
-from ..utils import deprecated
-from ..utils.extmath import row_norms
-from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import combinations_with_replacement as combinations_w_r
-from ..utils.fixes import bincount
-from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
-                                      inplace_csr_row_normalize_l2)
-from ..utils.sparsefuncs import (inplace_column_scale,
-                                 mean_variance_axis, incr_mean_variance_axis,
-                                 min_max_axis)
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+# from ..externals import six
+# from ..utils import check_array
+# from ..utils import deprecated
+# from ..utils.extmath import row_norms
+# from ..utils.extmath import _incremental_mean_and_var
+# from ..utils.fixes import combinations_with_replacement as combinations_w_r
+# from ..utils.fixes import bincount
+# from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
+#                                       inplace_csr_row_normalize_l2)
+# from ..utils.sparsefuncs import (inplace_column_scale,
+#                                  mean_variance_axis, incr_mean_variance_axis,
+#                                  min_max_axis)
+# from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 
-zip = six.moves.zip
-map = six.moves.map
-range = six.moves.range
+# zip = six.moves.zip
+# map = six.moves.map
+# range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -248,18 +248,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     def __init__(self, feature_range=(0, 1), copy=True):
         self.feature_range = feature_range
         self.copy = copy
-
-    @property
-    @deprecated("Attribute data_range will be removed in "
-                "0.19. Use ``data_range_`` instead")
-    def data_range(self):
-        return self.data_range_
-
-    @property
-    @deprecated("Attribute data_min will be removed in "
-                "0.19. Use ``data_min_`` instead")
-    def data_min(self):
-        return self.data_min_
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -521,11 +509,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.with_mean = with_mean
         self.with_std = with_std
         self.copy = copy
-
-    @property
-    @deprecated("Attribute ``std_`` will be removed in 0.19. Use ``scale_`` instead")
-    def std_(self):
-        return self.scale_
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.

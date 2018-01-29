@@ -11,13 +11,10 @@ from .forest import ExtraTreesClassifier
 from .forest import ExtraTreesRegressor
 from .bagging import BaggingClassifier
 from .bagging import BaggingRegressor
-from .gradient_boosting import GradientBoostingClassifier
-from .gradient_boosting import GradientBoostingRegressor
 from .voting_classifier import VotingClassifier
 
 from . import bagging
 from . import forest
-from . import gradient_boosting
 from . import partial_dependence
 
 __all__ = ["BaseEnsemble",

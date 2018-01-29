@@ -15,16 +15,16 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import np_version
-from ..utils.fixes import sparse_min_max
-from ..utils.fixes import astype
-from ..utils.fixes import in1d
-from ..utils import column_or_1d
-from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _num_samples
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
+# from ..utils.fixes import np_version
+# from ..utils.fixes import sparse_min_max
+# from ..utils.fixes import astype
+# from ..utils.fixes import in1d
+# from ..utils import column_or_1d
+# from ..utils.validation import check_array
+# from ..utils.validation import check_is_fitted
+# from ..utils.validation import _num_samples
+# from ..utils.multiclass import unique_labels
+# from ..utils.multiclass import type_of_target
 
 from ..externals import six
 

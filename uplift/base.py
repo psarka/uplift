@@ -8,18 +8,7 @@ import warnings
 
 import numpy as np
 from scipy import sparse
-from .externals import six
-from .utils.fixes import signature
-from .utils.deprecation import deprecated
-# from .metrics import accuracy_score
-# from .metrics import r2_score
-from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
-
-
-@deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class ChangedBehaviorWarning(_ChangedBehaviorWarning):
-    pass
+from inspect import signature
 
 
 ##############################################################################
@@ -54,7 +43,7 @@ def clone(estimator, safe=True):
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
-    for name, param in six.iteritems(new_object_params):
+    for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
@@ -137,7 +126,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+    for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
@@ -256,7 +245,7 @@ class BaseEstimator(object):
             # Simple optimisation to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        for key, value in six.iteritems(params):
+        for key, value in params.items():
             split = key.split('__', 1)
             if len(split) > 1:
                 # nested objects case
@@ -377,58 +366,6 @@ class ClusterMixin(object):
         # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
-
-
-class BiclusterMixin(object):
-    """Mixin class for all bicluster estimators in scikit-learn"""
-
-    @property
-    def biclusters_(self):
-        """Convenient way to get row and column indicators together.
-
-        Returns the ``rows_`` and ``columns_`` members.
-        """
-        return self.rows_, self.columns_
-
-    def get_indices(self, i):
-        """Row and column indices of the i'th bicluster.
-
-        Only works if ``rows_`` and ``columns_`` attributes exist.
-
-        Returns
-        -------
-        row_ind : np.array, dtype=np.intp
-            Indices of rows in the dataset that belong to the bicluster.
-        col_ind : np.array, dtype=np.intp
-            Indices of columns in the dataset that belong to the bicluster.
-
-        """
-        rows = self.rows_[i]
-        columns = self.columns_[i]
-        return np.nonzero(rows)[0], np.nonzero(columns)[0]
-
-    def get_shape(self, i):
-        """Shape of the i'th bicluster.
-
-        Returns
-        -------
-        shape : (int, int)
-            Number of rows and columns (resp.) in the bicluster.
-        """
-        indices = self.get_indices(i)
-        return tuple(len(i) for i in indices)
-
-    def get_submatrix(self, i, data):
-        """Returns the submatrix corresponding to bicluster `i`.
-
-        Works with sparse matrices. Only works if ``rows_`` and
-        ``columns_`` attributes exist.
-
-        """
-        from .utils.validation import check_array
-        data = check_array(data, accept_sparse='csr')
-        row_ind, col_ind = self.get_indices(i)
-        return data[row_ind[:, np.newaxis], col_ind]
 
 
 ###############################################################################

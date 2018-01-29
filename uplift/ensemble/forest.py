@@ -1,37 +1,3 @@
-"""Forest of trees-based ensemble methods
-
-Those methods include random forests and extremely randomized trees.
-
-The module structure is the following:
-
-- The ``BaseForest`` base class implements a common ``fit`` method for all
-  the estimators in the module. The ``fit`` method of the base ``Forest``
-  class calls the ``fit`` method of each sub-estimator on random samples
-  (with replacement, a.k.a. bootstrap) of the training set.
-
-  The init of the sub-estimator is further delegated to the
-  ``BaseEnsemble`` constructor.
-
-- The ``ForestClassifier`` and ``ForestRegressor`` base classes further
-  implement the prediction logic by computing an average of the predicted
-  outcomes of the sub-estimators.
-
-- The ``RandomForestClassifier`` and ``RandomForestRegressor`` derived
-  classes provide the user with concrete implementations of
-  the forest ensemble method using classical, deterministic
-  ``DecisionTreeClassifier`` and ``DecisionTreeRegressor`` as
-  sub-estimator implementations.
-
-- The ``ExtraTreesClassifier`` and ``ExtraTreesRegressor`` derived
-  classes provide the user with concrete implementations of the
-  forest ensemble method using the extremely randomized trees
-  ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
-  sub-estimator implementations.
-
-Single and multi-output problems are both handled.
-
-"""
-
 # Authors: Paulius Sarka <paulius.sarka@gmail.com>
 #
 # Based on sklearn/ensemble/forest.py (BSD 3 clause)
@@ -43,26 +9,35 @@ from __future__ import division
 import warnings
 from warnings import warn
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
-from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
-#from ..metrics import r2_score
-from ..preprocessing import OneHotEncoder
-from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
-                    ExtraTreeClassifier, ExtraTreeRegressor)
-from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array, compute_sample_weight
-from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import bincount, parallel_helper
-from ..utils.multiclass import check_classification_targets
+
+from ..externals.joblib import Parallel, delayed
+from ..preprocessing import OneHotEncoder
+
+
+from uplift.tree._tree import DTYPE
+from uplift.tree._tree import DOUBLE
+
+from uplift.tree import DecisionTreeClassifier
+from uplift.tree import DecisionTreeRegressor
+from uplift.tree import ExtraTreeClassifier
+from uplift.tree import ExtraTreeRegressor
+
+from uplift.exceptions import DataConversionWarning
+from uplift.exceptions import NotFittedError
+
+from uplift.validation.multiclass import check_classification_targets
+from uplift.validation.check import check_random_state
+from uplift.validation.check import check_array
+from uplift.validation.class_weight import compute_sample_weight
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -72,6 +47,7 @@ __all__ = ["RandomForestClassifier",
 
 MAX_INT = np.iinfo(np.int32).max
 
+
 def _generate_sample_indices(random_state, n_samples):
     """Private function used to _parallel_build_trees function."""
     random_instance = check_random_state(random_state)
@@ -79,15 +55,17 @@ def _generate_sample_indices(random_state, n_samples):
 
     return sample_indices
 
+
 def _generate_unsampled_indices(random_state, n_samples):
     """Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(random_state, n_samples)
-    sample_counts = bincount(sample_indices, minlength=n_samples)
+    sample_counts = np.bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
     indices_range = np.arange(n_samples)
     unsampled_indices = indices_range[unsampled_mask]
 
     return unsampled_indices
+
 
 def _parallel_build_trees(tree, forest, X, y, group, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
@@ -103,7 +81,7 @@ def _parallel_build_trees(tree, forest, X, y, group, sample_weight, tree_idx, n_
             curr_sample_weight = sample_weight.copy()
 
         indices = _generate_sample_indices(tree.random_state, n_samples)
-        sample_counts = bincount(indices, minlength=n_samples)
+        sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
@@ -120,7 +98,7 @@ def _parallel_build_trees(tree, forest, X, y, group, sample_weight, tree_idx, n_
     return tree
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, _LearntSelectorMixin)):
+class BaseForest(ABC, BaseEnsemble):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -369,7 +347,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, _LearntSelectorMixin)
         return sum(all_importances) / len(self.estimators_)
 
 
-class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest, ClassifierMixin)):
+class ForestClassifier(BaseForest, ClassifierMixin):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -468,7 +446,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest, ClassifierMixin))
 
         if self.class_weight is not None:
             valid_presets = ('auto', 'balanced', 'subsample', 'balanced_subsample')
-            if isinstance(self.class_weight, six.string_types):
+            if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'
@@ -557,13 +535,12 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest, ClassifierMixin))
         return proba
 
 
-class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
+class ForestRegressor(BaseForest, RegressorMixin):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-
     @abstractmethod
     def __init__(self,
                  base_estimator,
@@ -1567,3 +1544,8 @@ class RandomTreesEmbedding(BaseForest):
             Transformed dataset.
         """
         return self.one_hot_encoder_.transform(self.apply(X))
+
+
+def parallel_helper(obj, methodname, *args, **kwargs):
+    """Helper to workaround Python 2 limitations of pickling instance methods"""
+    return getattr(obj, methodname)(*args, **kwargs)

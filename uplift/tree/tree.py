@@ -1,21 +1,13 @@
-"""
-This module gathers tree-based methods, including decision, regression and
-randomized trees.
-"""
 
 # Authors: Paulius Sarka <paulius.sarka@gmail.com>
 #
 # Based on sklearn/tree/tree.py (BSD 3 clause)
 #
 # Licence: BSD 3 clause
-
-from __future__ import division
-
-
-import numbers
-from abc import ABCMeta
+from abc import ABC
 from abc import abstractmethod
 from math import ceil
+import numbers
 
 import numpy as np
 from scipy.sparse import issparse
@@ -23,13 +15,12 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_array
-from ..utils import check_random_state
-from ..utils import compute_sample_weight
-from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
+
+from uplift.validation.class_weight import compute_sample_weight
+from uplift.validation.check import check_array
+from uplift.validation.check import check_random_state
+from uplift.validation.multiclass import check_classification_targets
+from uplift.exceptions import NotFittedError
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -66,14 +57,12 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
-                                          _LearntSelectorMixin)):
+class BaseDecisionTree(ABC, BaseEstimator):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
-
     @abstractmethod
     def __init__(self,
                  criterion,
@@ -231,7 +220,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
 
-        if isinstance(self.max_features, six.string_types):
+        if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))

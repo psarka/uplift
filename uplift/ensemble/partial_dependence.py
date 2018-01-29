@@ -9,15 +9,12 @@ import numbers
 import numpy as np
 from scipy.stats.mstats import mquantiles
 
-from ..utils.extmath import cartesian
+# from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..externals.six.moves import map, range, zip
-from ..utils import check_array
-from ..tree._tree import DTYPE
-
-from ._gradient_boosting import _partial_dependence_tree
-from .gradient_boosting import BaseGradientBoosting
+# from ..externals.six.moves import map, range, zip
+# from ..utils import check_array
+from uplift.tree._tree import DTYPE
 
 
 def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):

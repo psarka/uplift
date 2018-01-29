@@ -4,18 +4,18 @@
 # Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from warnings import warn
 
 import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array, safe_mask
-from ..externals import six
+from uplift.validation.check import check_array
 
 
-class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
+class SelectorMixin(ABC, TransformerMixin):
     """
     Tranformer mixin that performs feature selection given a support mask
 

@@ -17,12 +17,12 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 #from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
-from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted
-from ..utils.fixes import bincount
-from ..utils.metaestimators import if_delegate_has_method
-from ..utils.multiclass import check_classification_targets
+# from ..utils import check_random_state, check_X_y, check_array, column_or_1d
+# from ..utils.random import sample_without_replacement
+# from ..utils.validation import has_fit_parameter, check_is_fitted
+# from ..utils.fixes import bincount
+# from ..utils.metaestimators import if_delegate_has_method
+# from ..utils.multiclass import check_classification_targets
 
 from .base import BaseEnsemble, _partition_estimators
 
@@ -711,7 +711,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         else:
             return np.log(self.predict_proba(X))
 
-    @if_delegate_has_method(delegate='base_estimator')
+    # @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 

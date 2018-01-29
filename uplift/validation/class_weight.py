@@ -1,13 +1,8 @@
 # Authors: Andreas Mueller
 #          Manoj Kumar
 # License: BSD 3 clause
-
 import warnings
 import numpy as np
-from ..externals import six
-from ..utils.fixes import in1d
-
-from .fixes import bincount
 
 
 def compute_class_weight(class_weight, classes, y):
@@ -57,7 +52,7 @@ def compute_class_weight(class_weight, classes, y):
 
         # inversely proportional to the number of samples in the class
         if class_weight == 'auto':
-            recip_freq = 1. / bincount(y_ind)
+            recip_freq = 1. / np.bincount(y_ind)
             weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
             warnings.warn("The class_weight='auto' heuristic is deprecated in"
                           " 0.17 in favor of a new heuristic "
@@ -65,7 +60,7 @@ def compute_class_weight(class_weight, classes, y):
                           " 0.19", DeprecationWarning)
         else:
             recip_freq = len(y) / (len(le.classes_) *
-                                   bincount(y_ind).astype(np.float64))
+                                   np.bincount(y_ind).astype(np.float64))
             weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
@@ -121,12 +116,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
-    if isinstance(class_weight, six.string_types):
+    if isinstance(class_weight, str):
         if class_weight not in ['balanced', 'auto']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
-          not isinstance(class_weight, six.string_types)):
+          not isinstance(class_weight, str)):
         raise ValueError('The only valid class_weight for subsampling is '
                          '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:
@@ -174,7 +169,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         if classes_missing:
             # Make missing classes' weight zero
-            weight_k[in1d(y_full, list(classes_missing))] = 0.
+            weight_k[np.in1d(y_full, list(classes_missing))] = 0.
 
         expanded_class_weight.append(weight_k)
 

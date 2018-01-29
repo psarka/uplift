@@ -44,11 +44,10 @@ from .preprocessing import LabelBinarizer
 #from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.validation import _num_samples
-from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y
-from .utils.multiclass import (_check_partial_fit_first_call,
-                               check_classification_targets)
+from uplift.validation.multiclass import (_check_partial_fit_first_call,
+                                          check_classification_targets)
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 from .externals.six.moves import zip as izip

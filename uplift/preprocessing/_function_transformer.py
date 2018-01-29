@@ -1,5 +1,5 @@
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
+from uplift.validation.check import check_array
 
 
 def _identity(X):

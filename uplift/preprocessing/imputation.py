@@ -9,12 +9,12 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
-from ..utils import safe_mask
-from ..utils.fixes import astype
-from ..utils.sparsefuncs import _get_median
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
+# from ..utils import check_array
+# from ..utils import safe_mask
+# from ..utils.fixes import astype
+# from ..utils.sparsefuncs import _get_median
+# from ..utils.validation import check_is_fitted
+# from ..utils.validation import FLOAT_DTYPES
 
 from ..externals import six
 

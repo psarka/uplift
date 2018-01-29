@@ -1,6 +1,6 @@
-from ..utils import check_random_state
-
 import numpy as np
+
+from uplift.validation.check import check_random_state
 
 
 def make_radcliffe_surry(n_samples=64000, p_target=0.5,  a_positive=0.5, target_base_uplift=0.03,
