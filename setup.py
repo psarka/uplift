@@ -245,8 +245,8 @@ def setup_package():
                                           numpy_req_str))
             else:
                 raise ImportError("Numerical Python (NumPy) is not "
-                                  "installed.\n{0}{1}"
-                                  .format(numpy_req_str, instructions))
+                                  "installed.\n{0}"
+                                  .format(numpy_req_str))
         if scipy_status['up_to_date'] is False:
             if scipy_status['version']:
                 raise ImportError("Your installation of Scientific Python "
