@@ -12,8 +12,6 @@ This module defines export functions for decision trees.
 
 import numpy as np
 
-from ..externals import six
-
 from . import _criterion
 from . import _tree
 
@@ -214,7 +212,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         if impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
                 criterion = "friedman_mse"
-            elif not isinstance(criterion, six.string_types):
+            elif not isinstance(criterion, str):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
@@ -363,11 +361,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
     own_file = False
     try:
-        if isinstance(out_file, six.string_types):
-            if six.PY3:
-                out_file = open(out_file, "w", encoding="utf-8")
-            else:
-                out_file = open(out_file, "wb")
+        if isinstance(out_file, str):
+            out_file = open(out_file, "w", encoding="utf-8")
             own_file = True
 
         # The depth of each node for plotting with 'leaf' option

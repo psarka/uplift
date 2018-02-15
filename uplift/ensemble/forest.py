@@ -19,9 +19,9 @@ from scipy.sparse import hstack as sparse_hstack
 from ..base import ClassifierMixin, RegressorMixin
 from .base import BaseEnsemble, _partition_estimators
 
-from ..externals.joblib import Parallel, delayed
 from ..preprocessing import OneHotEncoder
 
+from joblib import Parallel, delayed
 
 from uplift.tree._tree import DTYPE
 from uplift.tree._tree import DOUBLE

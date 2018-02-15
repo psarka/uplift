@@ -9,12 +9,10 @@ import itertools
 import numbers
 import numpy as np
 from warnings import warn
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, ABC
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
-from ..externals.six import with_metaclass
-from ..externals.six.moves import zip
+from joblib import Parallel, delayed
 #from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 # from ..utils import check_random_state, check_X_y, check_array, column_or_1d
@@ -191,7 +189,7 @@ def _parallel_predict_regression(estimators, estimators_features, X):
                                               estimators_features))
 
 
-class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseBagging(ABC, BaseEnsemble):
     """Base class for Bagging meta-estimator.
 
     Warning: This class should not be used directly. Use derived classes
