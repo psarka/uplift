@@ -75,7 +75,8 @@ def setup_package():
                     include_package_data=True,
                     install_requires=['numpy>=1.6.1',
                                       'scipy>=0.9',
-                                      'cython'])
+                                      'cython',
+                                      'joblib'])
 
     # These actions are required to succeed without numpy
     if len(sys.argv) == 1 or (

@@ -4,10 +4,10 @@ Work in progress.
 
 ## Installation
 
-For now run this to install (you will need all the dependencies of scikit-learn, cython and setuptools):
+For now run this to install:
 
 ```
-sudo apt-get install build-essential python3-dev libatlas-dev libatlas3-base libatlas-base-dev
+sudo apt-get install build-essential python3-dev
 ```
 
 ```
@@ -15,7 +15,6 @@ git clone https://github.com/psarka/uplift
 cd uplift
 python3.6 -m 'venv' venv
 source venv/bin/activate
-pip install -r requirements.txt
 pip install -e .
 ```
 
