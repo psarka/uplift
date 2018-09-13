@@ -5,30 +5,9 @@
 #
 # Based on scikit-learn
 # Licence: 3-clause BSD
-from Cython.Build import cythonize
 import os
 import sys
-
-if sys.version_info[0] < 3:
-    import __builtin__ as builtins
-else:
-    import builtins
-
-# This is a bit (!) hackish: we are setting a global variable so that the main
-# __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet
-builtins.__SKLEARN_SETUP__ = True
-
-# We can actually import a restricted version that does not need the compiled
-# code
 import uplift
-
-VERSION = uplift.__version__
-
-# Optional setuptools features
-# We need to import setuptools early, if we want setuptools features,
-# as it monkey-patches the 'setup' function
-# For some commands, use setuptools
 
 
 # Optional wheelhouse-uploader features
@@ -72,7 +51,7 @@ def setup_package():
                     description='tree based uplift models',
                     license='3-clause BSD',
                     url='https://github.com/psarka/uplift',
-                    version=VERSION,
+                    version=uplift.__version__,
                     classifiers=['Intended Audience :: Science/Research',
                                  'Intended Audience :: Developers',
                                  'License :: OSI Approved',
@@ -92,14 +71,11 @@ def setup_package():
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7'],
                     cmdclass=cmdclass,
-                    ext_modules=cythonize(['uplift/tree/_criterion.pyx',
-                                           'uplift/tree/_splitter.pyx',
-                                           'uplift/tree/_tree.pyx',
-                                           'uplift/tree/_utils.pyx']),
                     zip_safe=False,
                     include_package_data=True,
                     install_requires=['numpy>=1.6.1',
-                                      'scipy>=0.9'])
+                                      'scipy>=0.9',
+                                      'cython'])
 
     # These actions are required to succeed without numpy
     if len(sys.argv) == 1 or (
@@ -113,11 +89,15 @@ def setup_package():
         except ImportError:
             from distutils.core import setup
 
-        metadata['version'] = VERSION
     else:
 
         from numpy.distutils.core import setup
+        from Cython.Build import cythonize
         metadata['configuration'] = configuration
+        metadata['ext_modules'] = cythonize(['uplift/tree/_criterion.pyx',
+                                             'uplift/tree/_splitter.pyx',
+                                             'uplift/tree/_tree.pyx',
+                                             'uplift/tree/_utils.pyx'])
 
     setup(**metadata)
 
