@@ -5,8 +5,6 @@
 #
 # Based on scikit-learn
 # Licence: 3-clause BSD
-import subprocess
-
 descr = """TODO"""
 
 import sys
@@ -14,6 +12,7 @@ import os
 import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
+from Cython.Build import cythonize
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -43,24 +42,9 @@ VERSION = uplift.__version__
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
 # For some commands, use setuptools
-SETUPTOOLS_COMMANDS = set([
-    'develop', 'release', 'bdist_egg', 'bdist_rpm',
-    'bdist_wininst', 'install_egg_info', 'build_sphinx',
-    'egg_info', 'easy_install', 'upload', 'bdist_wheel',
-    '--single-version-externally-managed',
-])
-if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
-
-    extra_setuptools_args = dict(
-        zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True,
-    )
-else:
-    extra_setuptools_args = dict()
-
 
 # Custom clean command to remove build artifacts
+
 
 class CleanCommand(Clean):
     description = "Remove build artifacts from the source tree"
@@ -170,18 +154,6 @@ def get_numpy_status():
     return numpy_status
 
 
-def generate_cython():
-    cwd = os.path.abspath(os.path.dirname(__file__))
-    print("Cythonizing sources")
-    p = subprocess.call([sys.executable, os.path.join(cwd,
-                                                      'build_tools',
-                                                      'cythonize.py'),
-                         'uplift'],
-                        cwd=cwd)
-    if p != 0:
-        raise RuntimeError("Running cythonize failed!")
-
-
 def setup_package():
     metadata = dict(name=DISTNAME,
                     maintainer=MAINTAINER,
@@ -207,10 +179,14 @@ def setup_package():
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.3',
-                                 'Programming Language :: Python :: 3.4',
-                                 ],
+                                 'Programming Language :: Python :: 3.4'],
                     cmdclass=cmdclass,
-                    **extra_setuptools_args)
+                    ext_modules=cythonize(['uplift/tree/_criterion.pyx',
+                                           'uplift/tree/_splitter.pyx',
+                                           'uplift/tree/_tree.pyx',
+                                           'uplift/tree/_utils.pyx']),
+                    zip_safe=False,
+                    include_package_data=True)
 
     if len(sys.argv) == 1 or (
             len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
@@ -261,26 +237,6 @@ def setup_package():
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration
-
-        if len(sys.argv) >= 2 and sys.argv[1] not in 'config':
-            # Cythonize if needed
-
-            print('Generating cython files')
-            cwd = os.path.abspath(os.path.dirname(__file__))
-            if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
-                # Generate Cython sources, unless building from source release
-                generate_cython()
-
-            # Clean left-over .so file
-            for dirpath, dirnames, filenames in os.walk(
-                    os.path.join(cwd, 'uplift')):
-                for filename in filenames:
-                    extension = os.path.splitext(filename)[1]
-                    if extension in (".so", ".pyd", ".dll"):
-                        pyx_file = str.replace(filename, extension, '.pyx')
-                        print(pyx_file)
-                        if not os.path.exists(os.path.join(dirpath, pyx_file)):
-                            os.unlink(os.path.join(dirpath, filename))
 
     setup(**metadata)
 
