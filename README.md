@@ -1,5 +1,7 @@
 # uplift
 
+[![Build Status](https://travis-ci.org/psarka/uplift.svg?branch=master)](https://travis-ci.org/psarka/uplift) 
+
 Work in progress.
 
 ## Installation
