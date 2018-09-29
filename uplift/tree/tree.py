@@ -1,4 +1,3 @@
-
 # Authors: Paulius Sarka <paulius.sarka@gmail.com>
 #
 # Based on sklearn/tree/tree.py (BSD 3 clause)
