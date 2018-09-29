@@ -38,3 +38,17 @@ uplift_pred = rfc.predict_uplift(X_test)
 print(qini_q(y_test, uplift_pred, group_test))
 ```
 
+## Resources
+
+1999, N.Radcliffe, P.Surry, Differential Response Analysis: Modeling True Responses by Isolating the Effect of a Single Action  
+2002, B.Hansotia, B.Rukstales, Incremental Value Modeling  
+2007, N.Radcliffe, Using Control Groups to Target on Predicted Lift: Building and Assessing Uplift Models  
+2010, P.Rzepakowski, S.Jaroszewicz, Decision trees for uplift modeling  
+2011, N.Radcliffe, P.Surry, Real-World  Uplift Modelling with Significance-Based Uplift Trees  
+2012, P.Rzepakowski, S.Jaroszewicz, Decision trees for uplift modeling with single and multiple treatments  
+2015, L.Guelman, M.Guillen, M.Perez-Marin, Uplift Random  Forests  
+2015, M.Soltys, S.Jaroszewicz, P.Rzepakowski, Ensemble methods for uplift modeling  
+2017, W.Verbeke, C.Bravo, B.Baesens, Profit drive business analytics: A practitioner's guide to transforming big data into added value. (Chapter  4)
+
+- Wiki page: https://en.wikipedia.org/wiki/Uplift_modelling
+- R package: http://cran.r-project.org/web/packages/uplift/index.html

@@ -1,4 +1,3 @@
-
 # Authors: Paulius Sarka <paulius.sarka@gmail.com>
 #
 # Based on sklearn/tree/tree.py (BSD 3 clause)
@@ -667,8 +666,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             control = control_0 + control_1
             target = target_0 + target_1
 
-            p_control = np.where(control == 0, np.zeros_like(control), control_1 / control)
-            p_target = np.where(target == 0, np.zeros_like(target), target_1 / target)
+            p_control = np.divide(control_1, control, out=np.zeros_like(control), where=control != 0)
+            p_target = np.divide(target_1, target, out=np.zeros_like(target), where=target != 0)
 
             return p_target - p_control
 
